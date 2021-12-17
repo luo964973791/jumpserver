@@ -15,7 +15,7 @@ if [ "$SECRET_KEY" = "" ]; then SECRET_KEY=`cat /dev/urandom | tr -dc A-Za-z0-9 
 if [ "$BOOTSTRAP_TOKEN" = "" ]; then BOOTSTRAP_TOKEN=`cat /dev/urandom | tr -dc A-Za-z0-9 | head -c 16`; echo "BOOTSTRAP_TOKEN=$BOOTSTRAP_TOKEN" >> ~/.bashrc; echo $BOOTSTRAP_TOKEN; else echo $BOOTSTRAP_TOKEN; fi
 docker run -d --name jumpserver -h jumpserver --restart=always  \
     -v /data/jumpserver:/opt/jumpserver/data/media \
-    -p 80:80 \
+    -p 31080:80 \
     -p 2222:2222 \
     -e SECRET_KEY=$SECRET_KEY \
     -e BOOTSTRAP_TOKEN=$BOOTSTRAP_TOKEN \
