@@ -1,6 +1,7 @@
 ### 安装mysql、redis并设置密码
 ```javascript
 mysql> create database jumpserver charset='utf8';
+mysql> GRANT ALL PRIVILEGES ON *.* TO 'jumpserver'@'%' IDENTIFIED BY 'Test@123' WITH GRANT OPTION;
 #授权jumpserver用户jumpserver数据库的所有权限.
 cat /etc/redis.conf
 bind 172.27.0.5
