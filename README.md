@@ -1,5 +1,13 @@
 ### 安装mysql、redis并设置密码
+
+| DB    | version |
+| ----- | ------- |
+| MySQL | \>= 5.7 |
+| Redis | \>= 5.0 |
+
 ```javascript
+git clone https://github.com/luo964973791/jumpserver.git
+cd jumpserver && yum install ./redis-7.0.0-1.el7.remi.x86_64.rpm -y
 mysql> create database jumpserver charset='utf8';
 mysql> GRANT ALL PRIVILEGES ON *.* TO 'jumpserver'@'%' IDENTIFIED BY 'Test@123' WITH GRANT OPTION;
 #授权jumpserver用户jumpserver数据库的所有权限.
@@ -8,27 +16,47 @@ bind 172.27.0.5
 requirepass Test@123
 ```
 
-### 启动
+### 下载.
 ```javascript
-#!/bin/bash
-if [ "$SECRET_KEY" = "" ]; then SECRET_KEY=`cat /dev/urandom | tr -dc A-Za-z0-9 | head -c 50`; echo "SECRET_KEY=$SECRET_KEY" >> ~/.bashrc; echo $SECRET_KEY; else echo $SECRET_KEY; fi
+curl -sSL https://github.com/jumpserver/jumpserver/releases/download/v2.21.1/quick_start.sh | bash
 
-if [ "$BOOTSTRAP_TOKEN" = "" ]; then BOOTSTRAP_TOKEN=`cat /dev/urandom | tr -dc A-Za-z0-9 | head -c 16`; echo "BOOTSTRAP_TOKEN=$BOOTSTRAP_TOKEN" >> ~/.bashrc; echo $BOOTSTRAP_TOKEN; else echo $BOOTSTRAP_TOKEN; fi
-docker run -d --name jumpserver -h jumpserver --restart=always  \
-    -v /data/jumpserver:/opt/jumpserver/data/media \
-    -p 31080:80 \
-    -p 2222:2222 \
-    -e SECRET_KEY=$SECRET_KEY \
-    -e BOOTSTRAP_TOKEN=$BOOTSTRAP_TOKEN \
-    -e DB_HOST=172.27.0.5 \
-    -e DB_PORT=3306 \
-    -e DB_USER=jumpserver \
-    -e DB_PASSWORD="Test@123" \
-    -e DB_NAME=jumpserver \
-    -e REDIS_HOST=172.27.0.5 \
-    -e REDIS_PORT=6379 \
-    -e REDIS_PASSWORD="Test@123" \
-jumpserver/jms_all:latest
+cd /opt/jumpserver-installer-v2.21.1
+vi config-example.txt
+##  MySQL 配置, USE_EXTERNAL_MYSQL=1 表示使用外置 MySQL, 请输入正确的 MySQL 信息
+USE_EXTERNAL_MYSQL=1
+DB_HOST=172.27.0.8
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=Test@123
+DB_NAME=jumpserver
 
-#登录密码默认admin
+##  Redis 配置, USE_EXTERNAL_REDIS=1 表示使用外置 Redis, 请输入正确的 Redis 信息
+USE_EXTERNAL_REDIS=1
+REDIS_HOST=172.27.0.8
+REDIS_PORT=6379
+REDIS_PASSWORD=Test@123
+
+
+vi .env
+##  MySQL 配置, USE_EXTERNAL_MYSQL=1 表示使用外置 MySQL, 请输入正确的 MySQL 信息
+USE_EXTERNAL_MYSQL=0
+DB_HOST=mysql
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=NzlhZTRkNTYtMThjMS1iNDUxLW
+DB_NAME=jumpserver
+
+##  Redis 配置, USE_EXTERNAL_REDIS=1 表示使用外置 Redis, 请输入正确的 Redis 信息
+USE_EXTERNAL_REDIS=0
+REDIS_HOST=redis
+REDIS_PORT=6379
+REDIS_PASSWORD=NzlhZTRkNTYtMThjMS1iNDUxLW
 ```
+
+### 启动
+
+```javascript
+cd /opt/jumpserver-installer-v2.21.1 &&  ./jmsctl.sh uninstall
+cd /opt/jumpserver-installer-v2.21.1 && ./jmsctl.sh install
+```
+
