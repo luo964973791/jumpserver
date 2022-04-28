@@ -1,0 +1,55 @@
+version: '2.4'
+
+services:
+  omnidb:
+    image: registry.fit2cloud.com/jumpserver/omnidb:${VERSION}
+    container_name: jms_omnidb
+    ulimits:
+      core: 0
+    restart: always
+    tty: true
+    env_file:
+      - ${CONFIG_FILE}
+    volumes:
+      - ${VOLUME_DIR}/omnidb/data:/opt/omnidb/data
+    depends_on:
+      core:
+        condition: service_healthy
+    healthcheck:
+      test: "ps axu | grep -v 'grep' | grep 'omnidb'"
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - net
+
+  xrdp:
+    image: registry.fit2cloud.com/jumpserver/xrdp:${VERSION}
+    container_name: jms_xrdp
+    ulimits:
+      core: 0
+    restart: always
+    tty: true
+    env_file:
+      - ${CONFIG_FILE}
+    ports:
+      - ${RDP_PORT}:3389
+    volumes:
+      - ${VOLUME_DIR}/xrdp/data:/opt/xrdp/data
+      - ${CONFIG_DIR}/nginx/cert:/opt/xrdp/cert
+    depends_on:
+      core:
+        condition: service_healthy
+    healthcheck:
+      test: "ps axu | grep -v 'grep' | grep 'xrdp'"
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - net
+
+  magnus:
+    ports:
+      - ${MAGNUS_POSTGRE_PORT:-5432}:54320

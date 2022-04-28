@@ -1,0 +1,126 @@
+version: '2.4'
+
+services:
+  core:
+    image: jumpserver/core:${VERSION}
+    container_name: jms_core
+    ulimits:
+      core: 0
+    restart: always
+    tty: true
+    command: start web
+    env_file:
+      - ${CONFIG_FILE}
+    volumes:
+      - ${CONFIG_DIR}/core/config.yml:/opt/jumpserver/config.yml
+      - ${VOLUME_DIR}/core/data:/opt/jumpserver/data
+      - ${VOLUME_DIR}/core/logs:/opt/jumpserver/logs
+    healthcheck:
+      test: "curl -fsL http://localhost:8080/api/health/ > /dev/null"
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 90s
+    networks:
+      - net
+
+  koko:
+    image: jumpserver/koko:${VERSION}
+    container_name: jms_koko
+    ulimits:
+      core: 0
+    restart: always
+    tty: true
+    env_file:
+      - ${CONFIG_FILE}
+    ports:
+      - ${SSH_PORT}:2222
+    volumes:
+      - ${CONFIG_DIR}/koko/config.yml:/opt/koko/config.yml
+      - ${VOLUME_DIR}/koko/data:/opt/koko/data
+    depends_on:
+      core:
+        condition: service_healthy
+    privileged: true
+    healthcheck:
+      test: "curl -fsL http://localhost:5000/koko/health/ > /dev/null"
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - net
+
+  lion:
+    image: jumpserver/lion:${VERSION}
+    container_name: jms_lion
+    ulimits:
+      core: 0
+    restart: always
+    tty: true
+    env_file:
+      - ${CONFIG_FILE}
+    volumes:
+      - ${VOLUME_DIR}/lion/data:/opt/lion/data
+    depends_on:
+      core:
+        condition: service_healthy
+    healthcheck:
+      test: "curl -fsL http://localhost:8081/lion/health/ > /dev/null"
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - net
+
+  magnus:
+    image: jumpserver/magnus:${VERSION}
+    container_name: jms_magnus
+    ulimits:
+      core: 0
+    restart: always
+    tty: true
+    env_file:
+      - ${CONFIG_FILE}
+    ports:
+      - ${MAGNUS_MYSQL_PORT:-3306}:33060
+      - ${MAGNUS_MARIADB_PORT:-3307}:33061
+    volumes:
+      - ${VOLUME_DIR}/magnus/data:/opt/magnus/data
+    depends_on:
+      core:
+        condition: service_healthy
+    healthcheck:
+      test: "ps axu | grep -v 'grep' | grep magnus"
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - net
+
+  web:
+    image: jumpserver/web:${VERSION}
+    container_name: jms_web
+    ulimits:
+      core: 0
+    restart: always
+    tty: true
+    environment:
+      USE_IPV6: ${USE_IPV6}
+      CLIENT_MAX_BODY_SIZE: ${CLIENT_MAX_BODY_SIZE:-4096m}
+    volumes:
+      - ${VOLUME_DIR}/core/data:/opt/jumpserver/data
+      - ${VOLUME_DIR}/nginx/data/logs:/var/log/nginx
+    depends_on:
+      core:
+        condition: service_healthy
+    healthcheck:
+      test: "curl -fsL http://localhost/ > /dev/null"
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    networks:
+      - net
